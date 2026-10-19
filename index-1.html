@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HOT DOG Ya’Kasi</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#121212;--surface:#1e1e1e;--ink:#fff7e0;--muted:#b9ae94;--red:#e0241b;--mustard:#ffd21a;--teal:#1a8a49;--line:#3a3a3a;--onred:#fff;color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.45}
+header{background:#000;color:var(--mustard);padding:18px 16px 14px;border-bottom:6px solid var(--red)}header p{color:#fff}
+h1{font-family:"Permanent Marker",Impact,sans-serif;font-weight:400;font-size:34px;margin:0;line-height:1.05}
+header p{margin:4px 0 0;opacity:.92;font-size:14px}
+nav{display:flex;gap:8px;padding:12px 16px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+nav button{flex:1;padding:11px;border-radius:999px;border:2px solid var(--ink);background:transparent;color:var(--ink);font:700 15px "DM Sans",sans-serif}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+main{max-width:640px;margin:0 auto;padding:0 16px 40px}
+h2{font-family:"Permanent Marker",Impact,sans-serif;color:var(--mustard);font-weight:400;font-size:24px;margin:22px 0 10px}
+.item{display:flex;align-items:center;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.item .emoji{font-size:30px}
+.item .info{flex:1;min-width:0}
+.item b{display:block}
+.item small{color:var(--muted)}
+.price{font-weight:700;color:var(--mustard)}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);background:var(--mustard);color:#2a1a12;font:700 20px/1 "DM Sans";cursor:pointer}
+.qty span{min-width:18px;text-align:center;font-weight:700}
+input,textarea{width:100%;padding:12px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:16px "DM Sans",sans-serif;margin-bottom:10px}
+.total{display:flex;justify-content:space-between;font-weight:700;font-size:18px;margin:6px 0 12px}
+.btn{width:100%;padding:15px;border-radius:12px;border:0;background:var(--red);color:#fff;font:700 17px "DM Sans",sans-serif;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.green{background:var(--teal);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.order{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.order .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.badge{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--mustard);color:#2a1a12}
+.badge.accepted{background:var(--teal);color:#fff}
+.badge.ready{background:#2e9e4f;color:#fff}
+.badge.declined{background:#777;color:#fff}
+.badge.collected{background:var(--line);color:var(--ink)}
+.order ul{margin:6px 0 10px;padding-left:18px}
+.row{display:flex;gap:8px}
+.row .btn{padding:12px;font-size:15px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px;border:2px dashed var(--line);border-radius:14px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:608px;margin:auto;background:var(--ink);color:var(--bg);padding:13px 16px;border-radius:12px;font-weight:700;display:none;z-index:10}
+.hidden{display:none}
+.steps{display:flex;gap:4px;margin:8px 0}
+.steps i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.steps i.on{background:var(--teal)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hot Dog <span style="color:#fff">Ya’Kasi</span></h1>
+  <p>Real food. Kasi vibes. Good taste.</p>
+  <p><a href="https://wa.me/27640051939" style="color:var(--mustard);font-weight:700">WhatsApp order: 064 005 1939</a></p>
+</header>
+<nav role="tablist" id="nav">
+  <button role="tab" id="tab-order" aria-selected="true">Order</button>
+  <button role="tab" id="tab-mine" aria-selected="false">My orders</button>
+</nav>
+<main>
+  <section id="view-order">
+    <h2>Woza uzozwa! Menu</h2>
+    <div id="menu"></div>
+    <h2>Your details</h2>
+    <input id="name" placeholder="Your name" autocomplete="name">
+    <input id="phone" placeholder="Phone number" inputmode="tel" autocomplete="tel">
+    <textarea id="note" rows="2" placeholder="Note (e.g. no onions, extra sauce)"></textarea>
+    <div class="total"><span>Total</span><span id="total">R0</span></div>
+    <button class="btn" id="place" disabled>Place order on WhatsApp</button>
+    <a class="btn ghost" id="wa" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:10px">Order on WhatsApp instead</a>
+  </section>
+  <section id="view-mine" class="hidden"><h2>My orders</h2><div id="mine"></div></section>
+  <section id="view-kitchen" class="hidden">
+    <div id="gate"><h2>Kitchen login</h2><input id="pin" type="password" inputmode="numeric" placeholder="Enter PIN"><button class="btn" id="unlock">Unlock kitchen</button></div>
+    <div id="ktools" class="hidden"><h2>Incoming orders</h2><div id="kitchen"></div></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script>
+var WA="27640051939",PIN="1234";
+var MENU=[
+ {id:1,e:"\ud83c\udf2d",n:"Russian Hotdog",d:"With chips & salad",p:25},
+ {id:2,e:"\ud83c\udf2d",n:"Boerewors Hotdog",d:"With chips & salad",p:35},
+ {id:3,e:"\ud83e\udd6a",n:"Sandwich Bite",d:"Cheesy, meaty, delicious",p:25},
+ {id:4,e:"\ud83e\uddc0",n:"Chilli Cheese Chips & Vienna",d:"Loaded & tasty",p:30},
+ {id:5,e:"\ud83c\udf5f",n:"Chips (Small)",d:"Hot and salty",p:15},
+ {id:6,e:"\ud83c\udf5f",n:"Chips (Medium)",d:"Hot and salty",p:25}
+];
+var STEPS=["new","accepted","ready","collected"];
+var LABEL={new:"Waiting for kitchen",accepted:"Accepted",ready:"Ready for pickup",collected:"Collected",declined:"Declined"};
+var KITCHEN=location.hash==="#kitchen";
+var cart={},db=null,myIds=[],myOrders={},kOrders=[];
+function $(id){return document.getElementById(id)}
+function el(t,c,txt){var x=document.createElement(t);if(c)x.className=c;if(txt!=null)x.textContent=txt;return x}
+function toast(m){var t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(function(){t.style.display="none"},2600)}
+function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+myIds=lsGet("yk_mine",[]);myOrders=lsGet("yk_cache",{});
+
+function show(v){["order","mine","kitchen"].forEach(function(k){$("view-"+k).classList.toggle("hidden",k!==v);var t=$("tab-"+k);if(t)t.setAttribute("aria-selected",k===v)})}
+$("tab-order").onclick=function(){show("order")};$("tab-mine").onclick=function(){show("mine");renderMine()};
+
+function cartTotal(){return MENU.reduce(function(s,i){return s+(cart[i.id]||0)*i.p},0)}
+function cartItems(){return MENU.filter(function(i){return cart[i.id]}).map(function(i){return {n:i.n,q:cart[i.id],p:i.p}})}
+function waLink(o){var l=["Hot Dog Ya\u2019Kasi order"+(o.no?" #"+o.no:"")];o.items.forEach(function(i){l.push(i.q+" x "+i.n)});l.push("Total: R"+o.total);if(o.name)l.push("Name: "+o.name);if(o.note)l.push("Note: "+o.note);return "https://wa.me/"+WA+"?text="+encodeURIComponent(l.join("\n"))}
+function checkForm(){$("place").disabled=!(cartTotal()>0&&$("name").value.trim()&&$("phone").value.trim().length>=7);
+ $("wa").href=waLink({items:cartItems(),total:cartTotal(),name:$("name").value.trim(),note:$("note").value.trim()});
+ $("wa").style.opacity=cartTotal()>0?1:.45;$("wa").style.pointerEvents=cartTotal()>0?"auto":"none"}
+["name","phone","note"].forEach(function(k){$(k).oninput=checkForm});
+
+function renderMenu(){var m=$("menu");m.innerHTML="";MENU.forEach(function(i){
+ var r=el("div","item");r.appendChild(el("div","emoji",i.e));
+ var inf=el("div","info");inf.appendChild(el("b","",i.n));inf.appendChild(el("small","",i.d));inf.appendChild(el("div","price","R"+i.p));r.appendChild(inf);
+ var q=el("div","qty");var mi=el("button","","\u2212");mi.setAttribute("aria-label","Remove one "+i.n);
+ var c=el("span","",String(cart[i.id]||0));var pl=el("button","","+");pl.setAttribute("aria-label","Add one "+i.n);
+ mi.onclick=function(){if(cart[i.id]){cart[i.id]--;if(!cart[i.id])delete cart[i.id];renderMenu()}};
+ pl.onclick=function(){cart[i.id]=(cart[i.id]||0)+1;renderMenu()};
+ q.appendChild(mi);q.appendChild(c);q.appendChild(pl);r.appendChild(q);m.appendChild(r)});
+ $("total").textContent="R"+cartTotal();checkForm()}
+
+function itemsList(o){var u=el("ul");(o.items||[]).forEach(function(i){u.appendChild(el("li","",i.q+" \u00d7 "+i.n))});return u}
+
+$("place").onclick=function(){
+ var id="o"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+ var o={no:String(Date.now()%100000).padStart(5,"0"),name:$("name").value.trim(),phone:$("phone").value.trim(),note:$("note").value.trim(),items:cartItems(),total:cartTotal(),status:"new",ts:Date.now()};
+ myIds.push(id);lsSet("yk_mine",myIds);myOrders[id]=o;lsSet("yk_cache",myOrders);
+ if(db){db.doc("orders/"+id).set(o).then(function(){watchMine(id);toast("Order #"+o.no+" sent to the kitchen")}).catch(function(){toast("Could not reach the kitchen. Use WhatsApp to send it.")})}
+ else toast("Order saved. Tap Send on WhatsApp to reach the kitchen.");
+ try{window.open(waLink(o),"_blank")}catch(e){}
+ cart={};$("note").value="";renderMenu();show("mine");renderMine()};
+
+function renderMine(){var box=$("mine");box.innerHTML="";
+ var ids=myIds.slice().reverse();
+ if(!ids.length){box.appendChild(el("div","empty","No orders yet. Pick something from the menu."));return}
+ ids.forEach(function(id){var o=myOrders[id];if(!o)return;var c=el("div","order");var t=el("div","top");t.appendChild(el("b","","Order #"+o.no));t.appendChild(el("span","badge "+o.status,LABEL[o.status]));c.appendChild(t);
+  if(o.status!=="declined"){var s=el("div","steps");var idx=STEPS.indexOf(o.status);STEPS.forEach(function(x,k){s.appendChild(el("i",k<=idx?"on":""))});c.appendChild(s)}
+  c.appendChild(itemsList(o));c.appendChild(el("div","price","Total R"+o.total));
+  var r=el("div","row");r.style.marginTop="10px";
+  var w=el("a","btn ghost","Send on WhatsApp");w.href=waLink(o);w.target="_blank";w.rel="noopener";w.style.cssText="text-align:center;text-decoration:none";r.appendChild(w);
+  if(o.status==="new"&&db){var b=el("button","btn ghost","Cancel order");b.onclick=function(){db.doc("orders/"+id).update({status:"declined"})};r.appendChild(b)}
+  c.appendChild(r);box.appendChild(c)})}
+
+var watched={};
+function watchMine(id){if(!db||watched[id])return;watched[id]=1;
+ db.doc("orders/"+id).onSnapshot(function(s){if(s.exists){myOrders[id]=s.data();lsSet("yk_cache",myOrders);renderMine()}},function(){})}
+
+function ago(t){var m=Math.round((Date.now()-t)/60000);return m<1?"just now":m+" min ago"}
+function setStatus(id,s){db.doc("orders/"+id).update({status:s}).then(function(){toast(s==="accepted"?"Order accepted":s==="declined"?"Order declined":s==="ready"?"Marked ready":"Marked collected")}).catch(function(){toast("Could not update. Try again.")})}
+function renderKitchen(){var box=$("kitchen");box.innerHTML="";
+ if(!db){box.appendChild(el("div","empty","Shared orders are not available in this view. Sign in to Claude and reopen the kitchen link."));return}
+ var act=kOrders.filter(function(d){var s=d.o.status;return s==="new"||s==="accepted"||s==="ready"});
+ if(!act.length){box.appendChild(el("div","empty","No open orders. New ones appear here."));return}
+ act.forEach(function(d){var o=d.o,c=el("div","order");var t=el("div","top");t.appendChild(el("b","","#"+o.no+" \u00b7 "+o.name));t.appendChild(el("span","badge "+o.status,LABEL[o.status]));c.appendChild(t);
+  c.appendChild(el("small","",o.phone+" \u00b7 "+ago(o.ts)));c.appendChild(itemsList(o));
+  if(o.note)c.appendChild(el("p","","Note: "+o.note));
+  c.appendChild(el("div","price","R"+o.total));
+  var r=el("div","row");r.style.marginTop="10px";
+  function add(txt,cls,s){var b=el("button","btn "+cls,txt);b.onclick=function(){setStatus(d.id,s)};r.appendChild(b)}
+  if(o.status==="new"){add("Accept order","green","accepted");add("Decline","ghost","declined")}
+  else if(o.status==="accepted"){add("Mark ready","green","ready")}
+  else{add("Mark collected","green","collected")}
+  c.appendChild(r);box.appendChild(c)})}
+
+function openKitchen(){$("gate").classList.add("hidden");$("ktools").classList.remove("hidden");
+ if(db){db.collection("orders").orderBy("ts","desc").limit(100).onSnapshot(function(snap){kOrders=snap.docs.map(function(d){return {id:d.id,o:d.data()}});renderKitchen()},function(){renderKitchen()})}
+ renderKitchen();setInterval(renderKitchen,60000)}
+
+function init(){
+ if(KITCHEN){$("nav").classList.add("hidden");show("kitchen");document.querySelector("header p").textContent="Kitchen";
+  $("unlock").onclick=function(){if($("pin").value===PIN){try{sessionStorage.setItem("yk_k","1")}catch(e){}openKitchen()}else toast("Wrong PIN")};
+  try{if(sessionStorage.getItem("yk_k")==="1")openKitchen()}catch(e){}}
+ else{show("order");renderMenu();renderMine()}}
+init();
+window.addEventListener("hashchange",function(){location.reload()});
+(function(){try{return (window.claude&&typeof window.claude.use==="function")?Promise.resolve(window.claude.use("db")):Promise.resolve(null)}catch(e){return Promise.resolve(null)}})().then(function(d){db=d;if(!db)return;if(KITCHEN){if(!$("ktools").classList.contains("hidden"))openKitchen()}else{myIds.forEach(watchMine)}}).catch(function(){});
+</script>
+</html>
