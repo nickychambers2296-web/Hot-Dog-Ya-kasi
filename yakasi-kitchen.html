@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ya’Kasi Kitchen</title><meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#121212;--surface:#1e1e1e;--ink:#fff7e0;--muted:#b9ae94;--red:#e0241b;--mustard:#ffd21a;--teal:#1a8a49;--line:#3a3a3a;--onred:#fff;color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.45}
+header{background:#000;color:var(--mustard);padding:18px 16px 14px;border-bottom:6px solid var(--red)}header p{color:#fff}
+h1{font-family:"Permanent Marker",Impact,sans-serif;font-weight:400;font-size:34px;margin:0;line-height:1.05}
+header p{margin:4px 0 0;opacity:.92;font-size:14px}
+nav{display:flex;gap:8px;padding:12px 16px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+nav button{flex:1;padding:11px;border-radius:999px;border:2px solid var(--ink);background:transparent;color:var(--ink);font:700 15px "DM Sans",sans-serif}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+main{max-width:640px;margin:0 auto;padding:0 16px 40px}
+h2{font-family:"Permanent Marker",Impact,sans-serif;color:var(--mustard);font-weight:400;font-size:24px;margin:22px 0 10px}
+.item{display:flex;align-items:center;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.item .emoji{font-size:30px}
+.item .info{flex:1;min-width:0}
+.item b{display:block}
+.item small{color:var(--muted)}
+.price{font-weight:700;color:var(--mustard)}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);background:var(--mustard);color:#2a1a12;font:700 20px/1 "DM Sans";cursor:pointer}
+.qty span{min-width:18px;text-align:center;font-weight:700}
+input,textarea{width:100%;padding:12px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:16px "DM Sans",sans-serif;margin-bottom:10px}
+.total{display:flex;justify-content:space-between;font-weight:700;font-size:18px;margin:6px 0 12px}
+.btn{width:100%;padding:15px;border-radius:12px;border:0;background:var(--red);color:#fff;font:700 17px "DM Sans",sans-serif;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.green{background:var(--teal);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.order{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.order .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.badge{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--mustard);color:#2a1a12}
+.badge.accepted{background:var(--teal);color:#fff}
+.badge.ready{background:#2e9e4f;color:#fff}
+.badge.declined{background:#777;color:#fff}
+.badge.collected{background:var(--line);color:var(--ink)}
+.order ul{margin:6px 0 10px;padding-left:18px}
+.row{display:flex;gap:8px}
+.row .btn{padding:12px;font-size:15px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px;border:2px dashed var(--line);border-radius:14px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:608px;margin:auto;background:var(--ink);color:var(--bg);padding:13px 16px;border-radius:12px;font-weight:700;display:none;z-index:10}
+.hidden{display:none}
+.steps{display:flex;gap:4px;margin:8px 0}
+.steps i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.steps i.on{background:var(--teal)}
+</style>
+</head><body>
+<header><h1>Hot Dog <span style="color:#fff">Ya’Kasi</span></h1><p>Kitchen</p></header>
+<main>
+<section id="login"><h2>Kitchen login</h2>
+<input id="email" type="email" placeholder="Email" autocomplete="username">
+<input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+<button class="btn" id="go">Log in</button></section>
+<section id="app" class="hidden"><h2>Incoming orders</h2><div id="list"></div>
+<button class="btn ghost" id="out" style="margin-top:14px">Log out</button></section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,query,orderBy,limit,onSnapshot,doc,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyAXtiZ-ieHN2X42_arxUza0OIZJbPsKh04",authDomain:"hot-dog-ya-kasi.firebaseapp.com",projectId:"hot-dog-ya-kasi",storageBucket:"hot-dog-ya-kasi.firebasestorage.app",messagingSenderId:"645845198293",appId:"1:645845198293:web:43ca12480e438d1a73c95c"});const auth=getAuth(app),db=getFirestore(app);
+const LABEL={new:"NEW",accepted:"Accepted",ready:"Ready",collected:"Collected",declined:"Declined"};
+const $=id=>document.getElementById(id);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",3000)}
+let ac=null;function beep(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=880;g.gain.value=.2;o.start();o.stop(ac.currentTime+.4)}catch(e){}}
+$("go").onclick=async()=>{beep();$("go").disabled=true;try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("pw").value)}catch(e){toast("Login failed ("+(e.code||"error")+")")}$("go").disabled=false};
+$("out").onclick=()=>signOut(auth);
+let orders=[],first=true,unsub=null;
+const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?"just now":m+" min ago"};
+function setS(id,s){updateDoc(doc(db,"orders",id),{status:s}).catch(()=>toast("Could not update. Try again."))}
+function render(){const box=$("list");box.innerHTML="";
+const open=orders.filter(d=>["new","accepted","ready"].includes(d.o.status));
+document.title=(open.filter(d=>d.o.status==="new").length?"(" +open.filter(d=>d.o.status==="new").length+") ":"")+"Ya’Kasi Kitchen";
+if(!open.length){box.appendChild(el("div","empty","No open orders. New ones appear here."));return}
+open.forEach(d=>{const o=d.o,c=el("div","order");const t=el("div","top");
+t.append(el("b","","#"+o.no+" · "+o.name),el("span","badge "+o.status,LABEL[o.status]));c.appendChild(t);
+const ph=el("a","",o.phone);ph.href="tel:"+o.phone;ph.style.color="var(--mustard)";c.append(ph,el("small",""," · "+ago(o.ts)));
+const u=el("ul");o.items.forEach(i=>u.appendChild(el("li","",i.q+" × "+i.n)));c.appendChild(u);
+if(o.note)c.appendChild(el("p","","Note: "+o.note));
+c.appendChild(el("div","price","R"+o.total));
+const r=el("div","row");r.style.marginTop="10px";
+const add=(x,cl,s)=>{const b=el("button","btn "+cl,x);b.onclick=()=>setS(d.id,s);r.appendChild(b)};
+if(o.status==="new"){add("Accept order","green","accepted");add("Decline","ghost","declined")}
+else if(o.status==="accepted")add("Mark ready","green","ready");else add("Mark collected","green","collected");
+c.appendChild(r);box.appendChild(c)})}
+onAuthStateChanged(auth,u=>{
+if(unsub){unsub();unsub=null}
+$("login").classList.toggle("hidden",!!u);$("app").classList.toggle("hidden",!u);
+if(!u)return;first=true;
+unsub=onSnapshot(query(collection(db,"orders"),orderBy("ts","desc"),limit(100)),snap=>{
+orders=snap.docs.map(d=>({id:d.id,o:d.data()}));
+if(!first&&snap.docChanges().some(c=>c.type==="added")){beep();toast("New order!")}
+first=false;render()},e=>toast("Cannot load orders ("+(e.code||"error")+")"))});
+setInterval(()=>{if(orders.length)render()},60000);
+</script></body></html>

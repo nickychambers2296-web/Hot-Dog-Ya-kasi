@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HOT DOG Ya’Kasi</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#121212;--surface:#1e1e1e;--ink:#fff7e0;--muted:#b9ae94;--red:#e0241b;--mustard:#ffd21a;--teal:#1a8a49;--line:#3a3a3a;--onred:#fff;color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.45}
+header{background:#000;color:var(--mustard);padding:18px 16px 14px;border-bottom:6px solid var(--red)}header p{color:#fff}
+h1{font-family:"Permanent Marker",Impact,sans-serif;font-weight:400;font-size:34px;margin:0;line-height:1.05}
+header p{margin:4px 0 0;opacity:.92;font-size:14px}
+nav{display:flex;gap:8px;padding:12px 16px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+nav button{flex:1;padding:11px;border-radius:999px;border:2px solid var(--ink);background:transparent;color:var(--ink);font:700 15px "DM Sans",sans-serif}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+main{max-width:640px;margin:0 auto;padding:0 16px 40px}
+h2{font-family:"Permanent Marker",Impact,sans-serif;color:var(--mustard);font-weight:400;font-size:24px;margin:22px 0 10px}
+.item{display:flex;align-items:center;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.item .emoji{font-size:30px}
+.item .info{flex:1;min-width:0}
+.item b{display:block}
+.item small{color:var(--muted)}
+.price{font-weight:700;color:var(--mustard)}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);background:var(--mustard);color:#2a1a12;font:700 20px/1 "DM Sans";cursor:pointer}
+.qty span{min-width:18px;text-align:center;font-weight:700}
+input,textarea{width:100%;padding:12px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:16px "DM Sans",sans-serif;margin-bottom:10px}
+.total{display:flex;justify-content:space-between;font-weight:700;font-size:18px;margin:6px 0 12px}
+.btn{width:100%;padding:15px;border-radius:12px;border:0;background:var(--red);color:#fff;font:700 17px "DM Sans",sans-serif;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.green{background:var(--teal);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.order{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.order .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.badge{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--mustard);color:#2a1a12}
+.badge.accepted{background:var(--teal);color:#fff}
+.badge.ready{background:#2e9e4f;color:#fff}
+.badge.declined{background:#777;color:#fff}
+.badge.collected{background:var(--line);color:var(--ink)}
+.order ul{margin:6px 0 10px;padding-left:18px}
+.row{display:flex;gap:8px}
+.row .btn{padding:12px;font-size:15px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px;border:2px dashed var(--line);border-radius:14px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:608px;margin:auto;background:var(--ink);color:var(--bg);padding:13px 16px;border-radius:12px;font-weight:700;display:none;z-index:10}
+.hidden{display:none}
+.steps{display:flex;gap:4px;margin:8px 0}
+.steps i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.steps i.on{background:var(--teal)}
+</style>
+</head><body>
+<header><h1>Hot Dog <span style="color:#fff">Ya’Kasi</span></h1><p>Real food. Kasi vibes. Good taste.</p></header>
+<nav><button id="tab-order" aria-selected="true">Order</button><button id="tab-mine" aria-selected="false">My orders</button></nav>
+<main>
+<section id="view-order"><h2>Woza uzozwa! Menu</h2><div id="menu"></div>
+<h2>Your details</h2>
+<input id="name" placeholder="Your name" autocomplete="name">
+<input id="phone" placeholder="Phone number" inputmode="tel" autocomplete="tel">
+<textarea id="note" rows="2" placeholder="Note (e.g. no onions, extra sauce)"></textarea>
+<div class="total"><span>Total</span><span id="total">R0</span></div>
+<button class="btn" id="place" disabled>Place order</button></section>
+<section id="view-mine" class="hidden"><h2>My orders</h2><div id="mine"></div></section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,collection,addDoc,doc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const db=getFirestore(initializeApp({apiKey:"AIzaSyAXtiZ-ieHN2X42_arxUza0OIZJbPsKh04",authDomain:"hot-dog-ya-kasi.firebaseapp.com",projectId:"hot-dog-ya-kasi",storageBucket:"hot-dog-ya-kasi.firebasestorage.app",messagingSenderId:"645845198293",appId:"1:645845198293:web:43ca12480e438d1a73c95c"}));
+const WA="27657368860";
+const MENU=[
+{id:1,e:"🌭",n:"Russian Hotdog",d:"With chips & salad",p:25},
+{id:2,e:"🌭",n:"Boerewors Hotdog",d:"With chips & salad",p:35},
+{id:3,e:"🥪",n:"Sandwich Bite",d:"Cheesy, meaty, delicious",p:25},
+{id:4,e:"🧀",n:"Chilli Cheese Chips & Vienna",d:"Loaded & tasty",p:30},
+{id:5,e:"🍟",n:"Chips (Small)",d:"Hot and salty",p:15},
+{id:6,e:"🍟",n:"Chips (Medium)",d:"Hot and salty",p:25}];
+const STEPS=["new","accepted","ready","collected"];
+const LABEL={new:"Waiting for kitchen",accepted:"Accepted",ready:"Ready for pickup",collected:"Collected",declined:"Declined"};
+const $=id=>document.getElementById(id);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const lg=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const ls=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let cart={},mine=lg("yk2_ids",[]),cache=lg("yk2_cache",{});
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",3000)}
+function show(v){["order","mine"].forEach(k=>{$("view-"+k).classList.toggle("hidden",k!==v);$("tab-"+k).setAttribute("aria-selected",k===v)});if(v==="mine")renderMine()}
+$("tab-order").onclick=()=>show("order");$("tab-mine").onclick=()=>show("mine");
+const total=()=>MENU.reduce((s,i)=>s+(cart[i.id]||0)*i.p,0);
+const items=()=>MENU.filter(i=>cart[i.id]).map(i=>({n:i.n,q:cart[i.id],p:i.p}));
+function check(){$("place").disabled=!(total()>0&&$("name").value.trim()&&$("phone").value.trim().length>=7)}
+["name","phone"].forEach(k=>$(k).oninput=check);
+function renderMenu(){const m=$("menu");m.innerHTML="";MENU.forEach(i=>{
+const r=el("div","item");r.appendChild(el("div","emoji",i.e));
+const inf=el("div","info");inf.appendChild(el("b","",i.n));inf.appendChild(el("small","",i.d));inf.appendChild(el("div","price","R"+i.p));r.appendChild(inf);
+const q=el("div","qty");const mi=el("button","","−");mi.setAttribute("aria-label","Remove one "+i.n);
+const pl=el("button","","+");pl.setAttribute("aria-label","Add one "+i.n);
+mi.onclick=()=>{if(cart[i.id]){cart[i.id]--;if(!cart[i.id])delete cart[i.id];renderMenu()}};
+pl.onclick=()=>{cart[i.id]=(cart[i.id]||0)+1;renderMenu()};
+q.append(mi,el("span","",String(cart[i.id]||0)),pl);r.appendChild(q);m.appendChild(r)});
+$("total").textContent="R"+total();check()}
+const wa=o=>"https://wa.me/"+WA+"?text="+encodeURIComponent(["Hot Dog Ya’Kasi order #"+o.no,...o.items.map(i=>i.q+" x "+i.n),"Total: R"+o.total,"Name: "+o.name].join("\n"));
+function renderMine(){const box=$("mine");box.innerHTML="";
+if(!mine.length){box.appendChild(el("div","empty","No orders yet. Pick something from the menu."));return}
+mine.slice().reverse().forEach(id=>{const o=cache[id];if(!o)return;const c=el("div","order");const t=el("div","top");
+t.append(el("b","","Order #"+o.no),el("span","badge "+o.status,LABEL[o.status]||o.status));c.appendChild(t);
+if(o.status!=="declined"){const s=el("div","steps");const ix=STEPS.indexOf(o.status);STEPS.forEach((x,k)=>s.appendChild(el("i",k<=ix?"on":"")));c.appendChild(s)}
+const u=el("ul");o.items.forEach(i=>u.appendChild(el("li","",i.q+" × "+i.n)));c.appendChild(u);
+c.appendChild(el("div","price","Total R"+o.total));
+const a=el("a","btn ghost","Message us on WhatsApp");a.href=wa(o);a.target="_blank";a.rel="noopener";a.style.cssText="display:block;text-align:center;text-decoration:none;margin-top:10px";c.appendChild(a);
+box.appendChild(c)})}
+const watched={};
+function watch(id){if(watched[id])return;watched[id]=1;onSnapshot(doc(db,"orders",id),s=>{if(s.exists()){cache[id]=s.data();ls("yk2_cache",cache);renderMine()}},()=>{})}
+$("place").onclick=async()=>{
+const o={no:String(Date.now()%100000).padStart(5,"0"),name:$("name").value.trim(),phone:$("phone").value.trim(),note:$("note").value.trim(),items:items(),total:total(),status:"new",ts:Date.now()};
+$("place").disabled=true;
+try{const ref=await addDoc(collection(db,"orders"),o);mine.push(ref.id);ls("yk2_ids",mine);cache[ref.id]=o;ls("yk2_cache",cache);watch(ref.id);
+cart={};$("note").value="";renderMenu();show("mine");toast("Order #"+o.no+" sent to the kitchen")}
+catch(e){toast("Could not send your order. Check your internet and try again.");check()}};
+renderMenu();mine.forEach(watch);
+</script></body></html>
